@@ -16,7 +16,7 @@ file_put_contents('github_hook.log', print_r($payload, TRUE), FILE_APPEND);
 if ($config['env']==='dev'){
     // process push event
     if($payload->ref === 'refs/heads/master'){
-        $repoConf = findRepoConf($payload->repository->name);
+        $repoConf = findRepoConf($config['repos'], $payload->repository->name);
         if(!$repoConf){
             exit(0);
         }
@@ -27,7 +27,7 @@ if ($config['env']==='dev'){
 } else {
     // process release event
     if($payload->action=='published'){
-        $repoConf = findRepoConf($payload->repository->name);
+        $repoConf = findRepoConf($config['repos'], $payload->repository->name);
         if(in_array($payload->release->author->login, $repoConf['allowed_users'])){
             $output = shell_exec('./pull.sh '.$repoConf['path']);
             file_put_contents('github_pull.log', print_r($output, TRUE), FILE_APPEND);
@@ -42,8 +42,8 @@ if ($config['env']==='dev'){
     file_put_contents('github.log', print_r($output, TRUE), FILE_APPEND);
 }*/
 
-function findRepoConf($repoName){
-    foreach($config['repos'] as $repo){
+function findRepoConf($repos, $repoName){
+    foreach($repos as $repo){
         if($repo['name']===$repoName){
             return $repo;
         }
