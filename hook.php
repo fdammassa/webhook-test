@@ -13,7 +13,8 @@ catch(Exception $e)
 //log the request
 file_put_contents('github_hook.log', print_r($payload, TRUE), FILE_APPEND);
 
-$repoConf = findRepoConf($config['repos'], $payload->repository->name);
+$isRelease = isRelease($payload);
+$repoConf = findRepoConf($config['repos'], $payload->repository->name, $isRelease);
 if(!$repoConf){
     exit(0);
 }
@@ -26,7 +27,7 @@ if ($repoConf['env']==='dev'){
     }
 } else if($repoConf['env']==='prod') {
     // process release event
-    if(isset($payload->action) && $payload->action=='published'){
+    if($isRelease){
         if(in_array($payload->release->author->login, $repoConf['allowed_users'])){
             $output = shell_exec('./pull.sh '.$repoConf['path']);
             file_put_contents('github_pull.log', print_r($output, TRUE), FILE_APPEND);
@@ -34,11 +35,22 @@ if ($repoConf['env']==='dev'){
     }
 }
 
-function findRepoConf($repos, $repoName){
+function findRepoConf($repos, $repoName, $isRelease = false){
     foreach($repos as $repo){
         if($repo['name']===$repoName){
-            return $repo;
+            if($isRelease && $repo['env']=='prod')
+                return $repo;
+
+            if(!$isRelease && $repo['env']=='dev')
+                return $repo;
         }
     }
     return false;
+}
+
+function isRelease($payload){
+    if(isset($payload->action) && $payload->action=='published')
+        return true;
+    else
+        return false;
 }
