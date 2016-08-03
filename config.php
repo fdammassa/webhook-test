@@ -1,11 +1,16 @@
 <?php
 return [
-    'env' => 'dev',
     'repos' => [
         [
+            'env' => 'prod',
             'name' => 'webhook-test',
-            'path' => '/Users/fdammassa/Projects/servicein/test_hooks',
-            //'allowed_users' => ['fdammassa']
+            'path' => '/Users/fdammassa/Projects/servicein/test_hooks_prod',
+            'allowed_users' => ['fdammassa']
+        ],
+        [
+            'env' => 'dev',
+            'name' => 'webhook-test',
+            'path' => '/Users/fdammassa/Projects/servicein/test_hooks'
         ]
     ]
 ];

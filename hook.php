@@ -13,34 +13,26 @@ catch(Exception $e)
 //log the request
 file_put_contents('github_hook.log', print_r($payload, TRUE), FILE_APPEND);
 
-if ($config['env']==='dev'){
+$repoConf = findRepoConf($config['repos'], $payload->repository->name);
+if(!$repoConf){
+    exit(0);
+}
+
+if ($repoConf['env']==='dev'){
     // process push event
     if($payload->ref === 'refs/heads/master'){
-        $repoConf = findRepoConf($config['repos'], $payload->repository->name);
-        if(!$repoConf){
-            exit(0);
-        }
-
         $output = shell_exec('./pull.sh '.$repoConf['path']);
         file_put_contents('github_pull.log', print_r($output, TRUE), FILE_APPEND);
     }
-} else {
+} else if($repoConf['env']==='prod') {
     // process release event
-    if($payload->action=='published'){
-        $repoConf = findRepoConf($config['repos'], $payload->repository->name);
+    if(isset($payload->action) && $payload->action=='published'){
         if(in_array($payload->release->author->login, $repoConf['allowed_users'])){
             $output = shell_exec('./pull.sh '.$repoConf['path']);
             file_put_contents('github_pull.log', print_r($output, TRUE), FILE_APPEND);
         }
     }
 }
-
-/*if ($payload->ref === 'refs/heads/master')
-{
-    # path to your site deployment script
-    $output = shell_exec('/usr/local/bin/github_visionigniter');
-    file_put_contents('github.log', print_r($output, TRUE), FILE_APPEND);
-}*/
 
 function findRepoConf($repos, $repoName){
     foreach($repos as $repo){
